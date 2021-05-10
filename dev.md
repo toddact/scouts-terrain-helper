@@ -5,19 +5,22 @@
 To activate autorefresh onclick replace in manfesit.json
 
 ```javascript
-"content_scripts": [
-    {
-    "matches": [
-            "https://*opsgenie.com/alert/list"
-        ],
-        "js": [
-            "alertautorefresh.js"
-        ]
-    }
-],
+    "content_scripts": [
+		{
+			"matches": [
+				"https://terrain.scouts.com.au/*"
+			],
+			"js": [
+				"reports.js"
+			],
+			"css": [
+				"reports.css"
+			]
+		}
+	],
 ```
 
-with
+with  
 
 ```javascript
 "background": {

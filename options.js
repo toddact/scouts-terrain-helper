@@ -1,8 +1,8 @@
 // Saves options to chrome.storage
 function save_options() {
-  var refreshInterval = document.getElementById('refreshInterval').value;
+  var debug = document.getElementById('debug').value;
   chrome.storage.sync.set({
-    refreshInterval: refreshInterval
+    debug: debug
   }, function() {
     // Update status to let user know options were saved.
     var status = document.getElementById('status');
@@ -16,11 +16,11 @@ function save_options() {
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 function restore_options() {
-  // Use default value 30 seconds
+  // Use default value 0 seconds
   chrome.storage.sync.get({
-    refreshInterval: '30'
+    debug: '0'
   }, function(items) {
-    document.getElementById('refreshInterval').value = items.refreshInterval;
+    document.getElementById('debug').value = items.debug;
   });
 }
 document.addEventListener('DOMContentLoaded', restore_options);

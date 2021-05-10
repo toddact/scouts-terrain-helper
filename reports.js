@@ -34,18 +34,6 @@ async function showReportScreen(){
       console.log (myProfile);
     }
 
-    //Chage to fetch
-    /*var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-          var myUnit = JSON.parse(this.responseText);
-          showUnit(myUnit, container,myProfile.profiles[0].unit.name);
-      }
-    };
-    container.innerHTML = "Loading unit " + myProfile.profiles[0].unit.name + "...";
-    xhttp.open("GET", "https://metrics.terrain.scouts.com.au/units/"+myProfile.profiles[0].unit.id+"/members?limit=999", true);
-    xhttp.setRequestHeader('Authorization',localStorage.getItem("CognitoIdentityServiceProvider.6v98tbc09aqfvh52fml3usas3c."+lastuser+".idToken"));
-    xhttp.send();*/
     container.innerHTML = "Loading unit " + myProfile.profiles[0].unit.name + "...";
     const response = await fetch("https://metrics.terrain.scouts.com.au/units/"+myProfile.profiles[0].unit.id+"/members?limit=999", {
     method: 'GET', mode: 'cors', cache: 'no-cache', credentials: 'same-origin', 
@@ -74,6 +62,20 @@ function completion(done, required) {
 }
 
 
+
+function oas(oas) {
+  var oaslist = {"camping":"-", "bushcraft": "-" ,"bushwalking": "-","alpine":"-","cycling":"-","vertical":"-","aquatics":"-","boating":"-","paddling":"-"};
+ 
+  for (i = 0; i < oas.highest.length; i++) {
+    if (oaslist[oas.highest[i].branch] == "-" || oas.highest[i].stage > oaslist[oas.highest[i].branch]) {
+      oaslist[oas.highest[i].branch] = oas.highest[i].stage;
+    }
+  }
+  oas.list = oaslist;
+  return '<td class="core">'+oas.list.camping+'</td><td class="core">'+oas.list.bushcraft+'</td><td class="core">'+oas.list.bushwalking+'</td><td>'+oas.list.alpine+'</td><td>'+oas.list.cycling+'</td><td>'+oas.list.vertical+'</td><td class="water">'+oas.list.aquatics+'</td><td class="water">'+oas.list.boating+'</td><td class="water">'+oas.list.paddling+'</td>';
+}
+
+
 function showUnit(myUnit, container,unitName ) {
 
 
@@ -84,7 +86,11 @@ function showUnit(myUnit, container,unitName ) {
 
     var out = '<h2>Unit: '+unitName+'</h2><div class="v-data-table__wrapper"><table class="reports"><thead class="v-data-table-header"><tr><th scope="col" class="UnitsMetricsTable__header text-start rotate" style="width: 180px; min-width: 180px;"><div class="d-flex align-center"><span style="white-space: initial;">Unit member</span></div></th><th class="rotate"><div><span>Age</th><th class="rotate"><div><span>Scouts</th><th class="rotate"><div><span>Section</th> ' + 
       '<th class="rotate"><div><span>Milestone 1</span></div></th><th class="rotate"><div><span>Milestone 2</th><th class="rotate"><div><span>Milestone 3</th>' +
-      '<th style="width: 20px">&nbsp;</th><th class="rotate"><div><span>Current</th><th class="rotate"><div><span>Community</th><th class="rotate"><div><span>Outdoors</th><th class="rotate"><div><span>Creative</th><th class="rotate"><div><span>Personal Growth</th><th class="rotate"><div><span>Assist</th><th class="rotate"><div><span>Lead</th></tr></thead>';
+      '<th class="divider">&nbsp;</th><th class="rotate"><div><span>Current</th><th class="rotate"><div><span>Community</th><th class="rotate"><div><span>Outdoors</th><th class="rotate"><div><span>Creative</th><th class="rotate"><div><span>Personal Growth</th><th class="rotate"><div><span>Assist</th><th class="rotate"><div><span>Lead</th>' +
+      '<th class="divider"><div><span></th><th class="rotate"><div><span>Camping</th><th class="rotate"><div><span>Bushcraft</th><th class="rotate"><div><span>Bushwalking</th>' +
+      '<th class="rotate"><div><span>Alpine</th><th class="rotate"><div><span>Cycling</th><th class="rotate"><div><span>Vertical</th>' +
+      '<th class="rotate"><div><span>Aquatics</th><th class="rotate"><div><span>Boating</th><th class="rotate"><div><span>Paddling</th>' +
+      '</tr></thead>';
     var i;
     myUnit.results.sort(compareAge);
 
@@ -102,13 +108,24 @@ function showUnit(myUnit, container,unitName ) {
             var ca = me.milestone.participates[j].challenge_area
             me[ca] = completion(me.milestone.participates[j].total,milestoneTable[me.milestone.milestone].participate);
         }
+        
 
-        out +=  '<tr><td>' + me.name + '</td><td>' + me.y + '</td><td class="' + into_scouts + '"></td><td class="' + into_section + '"></td><td class="' + m1 + '"></td><td class="' + m2 + '"></td><td class="' + m3 + '"></td><td></td><td>'+me.milestone.milestone+'</td>'+me.community +me.outdoors +me.creative +me.personal_growth +
-        completion(me.milestone.total_assists,milestoneTable[me.milestone.milestone].assist)+completion(me.milestone.total_leads,milestoneTable[me.milestone.milestone].lead)+'</tr>';
+        out +=  '<tr><td>' + me.name + '</td><td>' + me.y + '</td><td class="' + into_scouts + '"></td><td class="' + into_section + '"></td><td class="' + m1 + '"></td><td class="' + m2 + '"></td><td class="' + m3 + '"></td><td class="divider">&nbsp;</td><td>'+me.milestone.milestone+'</td>'+me.community +me.outdoors +me.creative +me.personal_growth +
+        completion(me.milestone.total_assists,milestoneTable[me.milestone.milestone].assist)+completion(me.milestone.total_leads,milestoneTable[me.milestone.milestone].lead)+'<td class="divider">&nbsp</td>'+oas(me.oas)+'</tr>';
     }
     //Output Table
     container.innerHTML = out + "</table></div>";
+   
 
+     if (debug) {
+      myUnit.results[0].member_id = "*****"
+      var myRe = /(.*) (\w).*/g;
+      var ra = myRe.exec(myUnit.results[0].name);
+      myUnit.results[0].name = ra[1]+' '+ra[2];
+        out = "<br>Debug:<br /><pre>"+JSON.stringify(myUnit.results[0])+"</pre>";
+        container.innerHTML += out;
+
+     }
   }
 
 // Compare Ages of scouts. Oldest will appear at the top
@@ -161,8 +178,15 @@ const setupMenu = () => {
 
 
 var myProfile = null;
-
+var debug = false;
 window.setTimeout(load, 100);
+
+chrome.storage.sync.get(['debug'], function(result) {
+  if (result.debug == 1) {debug = true;}
+  console.log((debug) ? 'Extension Debug on' : 'Extension Debug off');
+});
+
+
 function load() {
 
     if(document.getElementsByClassName("v-list")[0] === undefined) {

@@ -5,6 +5,15 @@
   
 .reports tr:nth-child(even){background-color: #f2f2f2;}
 
+.reports tr td.core{background-color: #E6F1E8;}
+.reports tr:nth-child(even) td.core{background-color: #D1DBD3;}
+
+.reports tr td.water{background-color: #E4F4FC;}
+.reports tr:nth-child(even) td.water{background-color: #D9E1E6;}
+
+
+
+
 th.rotate {
     height: 140px;
     white-space: nowrap;
