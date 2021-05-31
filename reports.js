@@ -34,23 +34,74 @@ async function showReportScreen(){
       console.log (myProfile);
     }
 
+    
+
+    //return m;
+
     container.innerHTML = "Loading unit " + myProfile.profiles[0].unit.name + "...";
-    const response = await fetch("https://metrics.terrain.scouts.com.au/units/"+myProfile.profiles[0].unit.id+"/members?limit=999", {
-    method: 'GET', mode: 'cors', cache: 'no-cache', credentials: 'same-origin', 
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': localStorage.getItem("CognitoIdentityServiceProvider.6v98tbc09aqfvh52fml3usas3c."+lastuser+".idToken")
-    },
-    redirect: 'error', referrerPolicy: 'no-referrer', 
+    const response = await fetch("https://metrics.terrain.scouts.com.au/units/"+myProfile.profiles[0].unit.id+"/members", { //?limit=999
+        method: 'GET', mode: 'cors', cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': localStorage.getItem("CognitoIdentityServiceProvider.6v98tbc09aqfvh52fml3usas3c."+lastuser+".idToken")
+        },
+        redirect: 'error', referrerPolicy: 'strict-origin-when-cross-origin', 
+     }).catch(err => {
+      container.innerHTML = "An error has occured loading unit members<br><pre>" + err + "</pre><p>Going to try using cached records...</p>";
+      console.log("Error getting members from API. " + err);
+      getMembersMetricsCache(myProfile.profiles[0].unit.id).then(data => {
+        container.innerHTML += "<br>Calling showUnit using cached data...";
+        showUnit(data, container,myProfile.profiles[0].unit.name + " (Cached)");
+      })
     });
     response.json().then(data => {
+       container.innerHTML += "<br>Calling showUnit...";
         showUnit(data, container,myProfile.profiles[0].unit.name);
     });;
     
-  /*} else {
-    alert("An error has occuring. Was unable to find the location to put the report");
-  }*/
 
+   // window.webpackJsonp
+  //const M = await window.$workbox;
+  //this.$accessor.me.getUnitMembersData
+  //window.webpackJsonp.$accessor.me.getUnitMembersData
+  //getUnitMembers
+}
+function getUnitMembers(M) {
+  return D.a.get("https://metrics.terrain.scouts.com.au/units/"+M+"/members?limit=999").then((M=>M.data.results)).catch((M=>{
+      if (console.warn("Failed to retrieve the Unit's Members. Error: " + M),
+      window.$nuxt.isOffline)
+          return window.$nuxt.error({
+              statusCode: 503,
+              message: ""
+          })
+  }
+  ));
+}
+
+async function getMembersMetricsCache(M) {
+
+  console.log("Getting members from cache");
+  const cacheStorage   = await caches.open( "workbox-runtime-https://terrain.scouts.com.au/" );
+  const request = new Request("https://metrics.terrain.scouts.com.au/units/"+M+"/members");
+  const options = {ignoreSearch: true, ignoreVary: true}
+  const cachedResponse = await cacheStorage.match(request.url, options);
+
+  if ( ! cachedResponse || ! cachedResponse.ok ) {
+    console.log("error getting members from cache");
+    return false;
+ }
+ //return cachedResponse;
+ return await cachedResponse.json();
+
+ /* const M = await window.$workbox;
+  
+    i = await M.core.caches.open("workbox-runtime-https://terrain.scouts.com.au/")
+            , o = await l({
+              plugins: r,
+              request: t,
+              mode: "read"
+          });
+          */
 }
 //If requirement is completed, show a tick
 function completion(done, required) {
@@ -164,7 +215,7 @@ const setupMenu = () => {
 
     if (document.getElementsByClassName("v-list")[0] != undefined) {
       
-      var menuItem = '<a id="reports" href="#reports" class="NavMenu__item v-list-item v-list-item--link theme--light" tabindex="0" router=""><div class="v-list-item__content"><!----> <div class="v-list-item__title">Reports</div></div></a>';
+      var menuItem = '<a id="reports" href="#reports" class="NavMenu__item v-list-item v-list-item--link theme--light" tabindex="0" router=""><div class="v-list-item__content"><!----> <div class="v-list-item__title">Reports ('+chrome.runtime.getManifest().version+')</div></div></a>';
       var menu = document.getElementsByClassName("ProfileSwitcher__panel")[0];
       menu.innerHTML += menuItem;
 
@@ -176,10 +227,20 @@ const setupMenu = () => {
     }
 };
 
+console.log (chrome.runtime.getManifest().name + " - Version: " + chrome.runtime.getManifest().version);
 
 var myProfile = null;
 var debug = false;
-window.setTimeout(load, 100);
+
+chrome.storage.sync.get(['enabled'], function(result) {
+   if (typeof result.enabled === 'undefined' || result.enabled) {
+    window.setTimeout(load, 100);
+   } else {
+     console.log ("Plugin not enabled");
+   }
+});
+
+
 
 chrome.storage.sync.get(['debug'], function(result) {
   if (result.debug == 1) {debug = true;}

@@ -1,8 +1,10 @@
 // Saves options to chrome.storage
 function save_options() {
-  var debug = document.getElementById('debug').value;
+  var debug = document.getElementById('debug').checked;
+  var enabled = document.getElementById('enabled').checked; //document.getElementById('enabled').value;
   chrome.storage.sync.set({
-    debug: debug
+    debug: debug,
+    enabled: enabled
   }, function() {
     // Update status to let user know options were saved.
     var status = document.getElementById('status');
@@ -18,9 +20,12 @@ function save_options() {
 function restore_options() {
   // Use default value 0 seconds
   chrome.storage.sync.get({
-    debug: '0'
+    debug: false,
+    enabled: true
   }, function(items) {
-    document.getElementById('debug').value = items.debug;
+    document.getElementById('debug').checked = items.debug;
+    //document.getElementById('enabled').value = items.enabled;
+    document.getElementById('enabled').checked =  items.enabled;
   });
 }
 document.addEventListener('DOMContentLoaded', restore_options);
