@@ -39,7 +39,7 @@ async function showReportScreen(){
     //return m;
 
     container.innerHTML = "Loading unit " + myProfile.profiles[0].unit.name + "...";
-    const response = await fetch("https://metrics.terrain.scouts.com.au/units/"+myProfile.profiles[0].unit.id+"/members", { //?limit=999
+    const response = await fetch("https://metrics.terrain.scouts.com.au/units/"+myProfile.profiles[0].unit.id+"/members?limit=999", { //?limit=999
         method: 'GET', mode: 'cors', cache: 'no-cache',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ function completion(done, required) {
 
 
 
-function oas(oas) {
+function oas(oas, output = "html") {
   var oaslist = {"camping":"-", "bushcraft": "-" ,"bushwalking": "-","alpine":"-","cycling":"-","vertical":"-","aquatics":"-","boating":"-","paddling":"-"};
  
   for (i = 0; i < oas.highest.length; i++) {
@@ -123,7 +123,11 @@ function oas(oas) {
     }
   }
   oas.list = oaslist;
-  return '<td class="core">'+oas.list.camping+'</td><td class="core">'+oas.list.bushcraft+'</td><td class="core">'+oas.list.bushwalking+'</td><td>'+oas.list.alpine+'</td><td>'+oas.list.cycling+'</td><td>'+oas.list.vertical+'</td><td class="water">'+oas.list.aquatics+'</td><td class="water">'+oas.list.boating+'</td><td class="water">'+oas.list.paddling+'</td>';
+  if (output=="html") {
+    return '<td class="core">'+oas.list.camping+'</td><td class="core">'+oas.list.bushcraft+'</td><td class="core">'+oas.list.bushwalking+'</td><td>'+oas.list.alpine+'</td><td>'+oas.list.cycling+'</td><td>'+oas.list.vertical+'</td><td class="water">'+oas.list.aquatics+'</td><td class="water">'+oas.list.boating+'</td><td class="water">'+oas.list.paddling+'</td>';
+  } else if (output=="csv") {
+    return oas.list.camping+','+oas.list.bushcraft+','+oas.list.bushwalking+','+oas.list.alpine+','+oas.list.cycling+','+oas.list.vertical+','+oas.list.aquatics+','+oas.list.boating+','+oas.list.paddling;
+  } else {return "error";}
 }
 
 
@@ -142,6 +146,8 @@ function showUnit(myUnit, container,unitName ) {
       '<th class="rotate"><div><span>Alpine</th><th class="rotate"><div><span>Cycling</th><th class="rotate"><div><span>Vertical</th>' +
       '<th class="rotate"><div><span>Aquatics</th><th class="rotate"><div><span>Boating</th><th class="rotate"><div><span>Paddling</th>' +
       '</tr></thead>';
+      var csvout = "";
+      if (csv) { csvout = "data:text/csv;charset=utf-8, Unit member,Age,Intro Scouts,Section,Milestone 1,Milestone 2,Milestone 3,Current,Community,Outdoors,Creative,Personal Growth,Assist,Lead,Camping,Bushcraft,Bushwalking,Alpine,Cycling,Vertical,Aquatics,Boating,Paddling\r\n"}
     var i;
     myUnit.results.sort(compareAge);
 
@@ -149,24 +155,37 @@ function showUnit(myUnit, container,unitName ) {
         var me = myUnit.results[i];
         var into_scouts = "";
         var into_section = "";
-        var m1 = ""; var m2 = ""; var m3 = "";
-        if (me.milestones[0] != undefined) { if (me.milestones[0].awarded == true) { m1 = "completed";} else {m1 = "inprogress";}}
-        if (me.milestones[1] != undefined) { if (me.milestones[1].awarded == true) { m2 = "completed";} else {m2 = "inprogress";}}
-        if (me.milestones[2] != undefined) { if (me.milestones[2].awarded == true) { m3 = "completed";} else {m3 = "inprogress";}}
+        var m = milestones(me.milestones);
         if (me.intro_to_scouts != null) {into_scouts = "completed";}
         if (me.intro_to_section != null) {into_section = "completed";}
         for (j = 0; j < me.milestone.participates.length; j++) {
             var ca = me.milestone.participates[j].challenge_area
             me[ca] = completion(me.milestone.participates[j].total,milestoneTable[me.milestone.milestone].participate);
+          if (csv) {me[ca+"_csv"] = me.milestone.participates[j].total + " of " + milestoneTable[me.milestone.milestone].participate;
+          }
         }
         
 
-        out +=  '<tr><td>' + me.name + '</td><td>' + me.y + '</td><td class="' + into_scouts + '"></td><td class="' + into_section + '"></td><td class="' + m1 + '"></td><td class="' + m2 + '"></td><td class="' + m3 + '"></td><td class="divider">&nbsp;</td><td>'+me.milestone.milestone+'</td>'+me.community +me.outdoors +me.creative +me.personal_growth +
+        out +=  '<tr><td>' + me.name + '</td><td>' + me.y + '</td><td class="' + into_scouts + '"></td><td class="' + into_section + '"></td><td class="' + m.m1 + '"></td><td class="' + m.m2 + '"></td><td class="' + m.m3 + '"></td><td class="divider">&nbsp;</td><td>'+me.milestone.milestone+'</td>'+me.community +me.outdoors +me.creative +me.personal_growth +
         completion(me.milestone.total_assists,milestoneTable[me.milestone.milestone].assist)+completion(me.milestone.total_leads,milestoneTable[me.milestone.milestone].lead)+'<td class="divider">&nbsp</td>'+oas(me.oas)+'</tr>';
+        
+        if (csv) {csvout +=  me.name + ',' + me.y + ',' + into_scouts + ',' + into_section + ',' + m.m1 + ',' + m.m2 + ',' + m.m3 + ','+me.milestone.milestone+','+me.community_csv +','+me.outdoors_csv +','+me.creative_csv +','+me.personal_growth_csv+','+me.milestone.total_assists+' of '+milestoneTable[me.milestone.milestone].assist+','+me.milestone.total_leads+' of '+milestoneTable[me.milestone.milestone].lead+','+oas(me.oas,"csv")+'\r\n';}
     }
     //Output Table
     container.innerHTML = out + "</table></div>";
-   
+    if (csv) {
+     // container.innerHTML += "<p></p><pre>" + csvout + "</pre><br/>";
+      //var encodedUri = encodeURI(csvout);
+      //window.open(encodedUri);
+
+      var encodedUri = encodeURI(csvout);
+      var link = document.createElement("a");
+      var linkText = document.createTextNode("Download CSV");
+      link.appendChild(linkText);
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "terrain.csv");
+      container.appendChild(link); // Required for FF
+    }
 
      if (debug) {
       myUnit.results[0].member_id = "*****"
@@ -179,6 +198,13 @@ function showUnit(myUnit, container,unitName ) {
      }
   }
 
+  function milestones(m) {
+    var mlist = {"m1":"","m2":"","m3":""}
+    for (var i = 0; i< m.length; i++) {
+      mlist["m"+m[i].milestone] =  (m[i].awarded == true ? "completed" : "inprogress")
+    }
+    return mlist;
+  }
 // Compare Ages of scouts. Oldest will appear at the top
 function compareAge( a, b ) {
     if (a.y === undefined) {
@@ -231,6 +257,7 @@ console.log (chrome.runtime.getManifest().name + " - Version: " + chrome.runtime
 
 var myProfile = null;
 var debug = false;
+var csv = false;
 
 chrome.storage.sync.get(['enabled'], function(result) {
    if (typeof result.enabled === 'undefined' || result.enabled) {
@@ -240,6 +267,10 @@ chrome.storage.sync.get(['enabled'], function(result) {
    }
 });
 
+chrome.storage.sync.get(['csv'], function(result) {
+  csv = result.csv;
+  console.log((csv) ? 'CSV Link is on' : 'CSV Link is off');
+});
 
 
 chrome.storage.sync.get(['debug'], function(result) {
