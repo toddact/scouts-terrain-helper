@@ -15,7 +15,7 @@
 
 
 th.rotate {
-    height: 140px;
+    height: 160px;
     white-space: nowrap;
   }
   
@@ -23,7 +23,8 @@ th.rotate {
     transform: 
       translate(25px, 51px)
       rotate(315deg);
-    width: 30px;
+    width: 60px;
+    margin-left: -30px;
   }
   th.rotate > div > span {
     border-bottom: 1px solid #ccc;

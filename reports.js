@@ -118,8 +118,9 @@ function oas(oas, output = "html") {
   var oaslist = {"camping":"-", "bushcraft": "-" ,"bushwalking": "-","alpine":"-","cycling":"-","vertical":"-","aquatics":"-","boating":"-","paddling":"-"};
  
   for (i = 0; i < oas.highest.length; i++) {
-    if (oaslist[oas.highest[i].branch] == "-" || oas.highest[i].stage > oaslist[oas.highest[i].branch]) {
-      oaslist[oas.highest[i].branch] = oas.highest[i].stage;
+    //eg. stream: "bushcraft" & branch: survival-skills
+    if (oaslist[oas.highest[i].stream] == "-" || oas.highest[i].stage > oaslist[oas.highest[i].stream]) {
+      oaslist[oas.highest[i].stream] = oas.highest[i].stage;
     }
   }
   oas.list = oaslist;
@@ -137,9 +138,9 @@ function showUnit(myUnit, container,unitName ) {
     var milestoneTable =
        {"1": {"participate": 6, "assist": 2, "lead": 1},
         "2": {"participate": 5, "assist": 3, "lead": 2},
-        "3": {"participate": 6, "assist": 4, "lead": 4}}
+        "3": {"participate": 4, "assist": 4, "lead": 4}}
 
-    var out = '<h2>Unit: '+unitName+'</h2><div class="v-data-table__wrapper"><table class="reports"><thead class="v-data-table-header"><tr><th scope="col" class="UnitsMetricsTable__header text-start rotate" style="width: 180px; min-width: 180px;"><div class="d-flex align-center"><span style="white-space: initial;">Unit member</span></div></th><th class="rotate"><div><span>Age</th><th class="rotate"><div><span>Scouts</th><th class="rotate"><div><span>Section</th> ' + 
+    var out = '<h2>Unit: '+unitName+'</h2><div class="v-data-table__wrapper"><table class="reports"><thead class="v-data-table-header"><tr><th scope="col" class="UnitsMetricsTable__header text-start" style="vertical-align:bottom; width: 180px; min-width: 180px;"><div class="d-flex align-center"><span style="white-space: initial;">Unit member</span></div></th><th class="rotate"><div><span>Age</th><th class="rotate"><div><span>Scouts</th><th class="rotate"><div><span>Section</th> ' + 
       '<th class="rotate"><div><span>Milestone 1</span></div></th><th class="rotate"><div><span>Milestone 2</th><th class="rotate"><div><span>Milestone 3</th>' +
       '<th class="divider">&nbsp;</th><th class="rotate"><div><span>Current</th><th class="rotate"><div><span>Community</th><th class="rotate"><div><span>Outdoors</th><th class="rotate"><div><span>Creative</th><th class="rotate"><div><span>Personal Growth</th><th class="rotate"><div><span>Assist</th><th class="rotate"><div><span>Lead</th>' +
       '<th class="divider"><div><span></th><th class="rotate"><div><span>Camping</th><th class="rotate"><div><span>Bushcraft</th><th class="rotate"><div><span>Bushwalking</th>' +
@@ -185,6 +186,9 @@ function showUnit(myUnit, container,unitName ) {
       link.setAttribute("href", encodedUri);
       link.setAttribute("download", "terrain.csv");
       container.appendChild(link); // Required for FF
+    } else {
+      var p = document.createTextNode("Use Extenstion Options to enable CSV Output");
+      container.appendChild(p); 
     }
 
      if (debug) {
@@ -243,7 +247,13 @@ const setupMenu = () => {
       
       var menuItem = '<a id="reports" href="#reports" class="NavMenu__item v-list-item v-list-item--link theme--light" tabindex="0" router=""><div class="v-list-item__content"><!----> <div class="v-list-item__title">Reports ('+chrome.runtime.getManifest().version+')</div></div></a>';
       var menu = document.getElementsByClassName("ProfileSwitcher__panel")[0];
-      menu.innerHTML += menuItem;
+      //menu.innerHTML += menuItem;
+      //1.0.5 - Fixed issue which stopped logout button from working
+      var htmlObject = document.createElement('div');
+      htmlObject.innerHTML = menuItem;
+      menu.appendChild(htmlObject); // Required for FF
+
+
 
       document.getElementById('reports').addEventListener('click',showReportScreen);
       console.log("Report button added");
