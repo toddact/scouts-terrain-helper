@@ -116,18 +116,28 @@ function completion(done, required) {
 
 function oas(oas, output = "html") {
   var oaslist = {"camping":"-", "bushcraft": "-" ,"bushwalking": "-","alpine":"-","cycling":"-","vertical":"-","aquatics":"-","boating":"-","paddling":"-"};
- 
+  var oasbranches = {"pioneering":"-","survival-skills":"-","cross-country-skiing":"-","snow-camping-and-hiking":"-","downhill-skiing":"-","snowboarding":"-","cycle-touring":"-","mountain-biking":"-","abseiling":"-","canyoning":"-","caving":"-","climbing":"-"};
   for (i = 0; i < oas.highest.length; i++) {
     //eg. stream: "bushcraft" & branch: survival-skills
     if (oaslist[oas.highest[i].stream] == "-" || oas.highest[i].stage > oaslist[oas.highest[i].stream]) {
       oaslist[oas.highest[i].stream] = oas.highest[i].stage;
     }
+    if (csvbranch && oas.highest[i].stream != oas.highest[i].branch) {
+      try {
+      oasbranches[oas.highest[i].branch] = oas.highest[i].stage;
+      } catch {
+        console.log("error on " + oas.highest[i].branch );
+      }
+    }
   }
   oas.list = oaslist;
+  oas.branches = oasbranches;
   if (output=="html") {
     return '<td class="core">'+oas.list.camping+'</td><td class="core">'+oas.list.bushcraft+'</td><td class="core">'+oas.list.bushwalking+'</td><td>'+oas.list.alpine+'</td><td>'+oas.list.cycling+'</td><td>'+oas.list.vertical+'</td><td class="water">'+oas.list.aquatics+'</td><td class="water">'+oas.list.boating+'</td><td class="water">'+oas.list.paddling+'</td>';
   } else if (output=="csv") {
-    return oas.list.camping+','+oas.list.bushcraft+','+oas.list.bushwalking+','+oas.list.alpine+','+oas.list.cycling+','+oas.list.vertical+','+oas.list.aquatics+','+oas.list.boating+','+oas.list.paddling;
+    branches = "";
+    if (csvbranch) { branches = ','+oas.branches["pioneering"]+','+oas.branches["survival-skills"]+','+oas.branches["cross-country-skiing"]+','+oas.branches["snow-camping-and-hiking"]+','+oas.branches["downhill-skiing"]+','+oas.branches["snowboarding"]+','+oas.branches["cycle-touring"]+','+oas.branches["mountain-biking"]+','+oas.branches["abseiling"]+','+oas.branches["canyoning"]+','+oas.branches["caving"]+','+oas.branches["climbing"];} 
+    return oas.list.camping+','+oas.list.bushcraft+','+oas.list.bushwalking+','+oas.list.alpine+','+oas.list.cycling+','+oas.list.vertical+','+oas.list.aquatics+','+oas.list.boating+','+oas.list.paddling+branches;
   } else {return "error";}
 }
 
@@ -148,7 +158,11 @@ function showUnit(myUnit, container,unitName ) {
       '<th class="rotate"><div><span>Aquatics</th><th class="rotate"><div><span>Boating</th><th class="rotate"><div><span>Paddling</th>' +
       '</tr></thead>';
       var csvout = "";
-      if (csv) { csvout = "data:text/csv;charset=utf-8, Unit member,Age,Intro Scouts,Section,Milestone 1,Milestone 2,Milestone 3,Current,Community,Outdoors,Creative,Personal Growth,Assist,Lead,Camping,Bushcraft,Bushwalking,Alpine,Cycling,Vertical,Aquatics,Boating,Paddling\r\n"}
+      if (csv) { 
+        csvout = "data:text/csv;charset=utf-8, Unit member,Age,Intro Scouts,Section,Milestone 1,Milestone 2,Milestone 3,Current,Community,Outdoors,Creative,Personal Growth,Assist,Lead,Camping,Bushcraft,Bushwalking,Alpine,Cycling,Vertical,Aquatics,Boating,Paddling";
+        if (csvbranch) { csvout += ",pioneering,survival-skills,cross-country-skiing,snow-camping-and-hiking,downhill-skiing,snowboarding,cycle-touring,mountain-biking,abseiling,canyoning,caving,climbing";}
+        csvout += "\r\n"
+      }
     var i;
     myUnit.results.sort(compareAge);
 
@@ -162,8 +176,9 @@ function showUnit(myUnit, container,unitName ) {
         for (j = 0; j < me.milestone.participates.length; j++) {
             var ca = me.milestone.participates[j].challenge_area
             me[ca] = completion(me.milestone.participates[j].total,milestoneTable[me.milestone.milestone].participate);
-          if (csv) {me[ca+"_csv"] = me.milestone.participates[j].total + " of " + milestoneTable[me.milestone.milestone].participate;
-          }
+            if (csv) {
+              me[ca+"_csv"] = me.milestone.participates[j].total + " of " + milestoneTable[me.milestone.milestone].participate;
+            }
         }
         
 
@@ -192,13 +207,17 @@ function showUnit(myUnit, container,unitName ) {
     }
 
      if (debug) {
-      myUnit.results[0].member_id = "*****"
-      var myRe = /(.*) (\w).*/g;
-      var ra = myRe.exec(myUnit.results[0].name);
-      myUnit.results[0].name = ra[1]+' '+ra[2];
-        out = "<br>Debug:<br /><pre>"+JSON.stringify(myUnit.results[0])+"</pre>";
-        container.innerHTML += out;
-
+       //Updated debug to output all members
+      out = "<br>Debug:<br /><pre>"
+      for (var i = 0; i < myUnit.results.length; i++) {
+        myUnit.results[i].member_id = "*****"
+        var myRe = /(.*) (\w).*/g;
+        var ra = myRe.exec(myUnit.results[i].name);
+        myUnit.results[i].name = ra[1]+' '+ra[2];
+        out += JSON.stringify(myUnit.results[i]) + "\n"
+      }
+      out += "</pre>";
+      container.innerHTML += out;
      }
   }
 
@@ -268,6 +287,7 @@ console.log (chrome.runtime.getManifest().name + " - Version: " + chrome.runtime
 var myProfile = null;
 var debug = false;
 var csv = false;
+var csvbranch = false;
 
 chrome.storage.sync.get(['enabled'], function(result) {
    if (typeof result.enabled === 'undefined' || result.enabled) {
@@ -280,6 +300,10 @@ chrome.storage.sync.get(['enabled'], function(result) {
 chrome.storage.sync.get(['csv'], function(result) {
   csv = result.csv;
   console.log((csv) ? 'CSV Link is on' : 'CSV Link is off');
+  chrome.storage.sync.get(['csvbranch'], function(result) {
+    csvbranch = result.csvbranch;
+    console.log((csvbranch) ? 'CSV Branch on' : 'CSV Branch off');
+  });
 });
 
 

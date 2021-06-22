@@ -1,7 +1,7 @@
 {
 	"name": "Scouts Terrain Helper",
 	"description": "Tools for Scouts Terrain",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"browser_action": {
 		"default_icon": {
 			"16": "assets/terrain-helper-16.png",

@@ -3,10 +3,12 @@ function save_options() {
   var debug = document.getElementById('debug').checked;
   var enabled = document.getElementById('enabled').checked; //document.getElementById('enabled').value;
   var csv = document.getElementById('csv').checked;
+  var csvbranch = document.getElementById('csvbranch').checked;
   chrome.storage.sync.set({
     debug: debug,
     enabled: enabled,
-    csv: csv
+    csv: csv,
+    csvbranch: csvbranch
   }, function() {
     // Update status to let user know options were saved.
     var status = document.getElementById('status');
@@ -24,11 +26,13 @@ function restore_options() {
   chrome.storage.sync.get({
     debug: false,
     enabled: true,
-    csv: false
+    csv: false,
+    csvbranch: false
   }, function(items) {
     document.getElementById('debug').checked = items.debug;
     document.getElementById('enabled').checked =  items.enabled;
     document.getElementById('csv').checked =  items.csv;
+    document.getElementById('csvbranch').checked =  items.csvbranch;
   });
 }
 document.addEventListener('DOMContentLoaded', restore_options);
